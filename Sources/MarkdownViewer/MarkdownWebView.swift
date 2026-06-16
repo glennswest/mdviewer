@@ -6,6 +6,8 @@ import WebKit
 /// own directory.
 struct MarkdownWebView: NSViewRepresentable {
     let url: URL
+    /// Changing this value forces the view to re-read the file from disk.
+    var reloadToken: Int = 0
 
     func makeNSView(context: Context) -> WKWebView {
         let v = WKWebView()

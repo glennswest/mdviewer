@@ -3,6 +3,15 @@
 ## [Unreleased]
 
 ### 2026-06-16
+- **feat:** Watch the open file for on-disk changes and auto-reload edits.
+- **feat:** Track recently viewed files — "Open Recent" menu and a recent list
+  in the empty state for one-click reopening.
+- **feat:** Flag the title bar (`● name — Updated`) with a timestamp subtitle
+  when the document reloads from an external change.
+- **fix:** Give the rendered page an explicit light/dark background so text
+  contrast no longer depends on the window chrome.
+
+### 2026-06-16 — initial
 - **feat:** Initial standalone macOS Markdown Viewer app.
 - **feat:** Markdown → XHTML converter supporting headings, ordered/unordered
   lists, blockquotes, fenced code blocks, inline code, bold/italic, horizontal
