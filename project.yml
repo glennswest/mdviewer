@@ -1,0 +1,45 @@
+name: MarkdownViewer
+options:
+  bundleIdPrefix: com.glennwest
+  deploymentTarget:
+    macOS: "13.0"
+  createIntermediateGroups: true
+  groupSortPosition: top
+
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    SWIFT_STRICT_CONCURRENCY: minimal
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    PRODUCT_NAME: MarkdownViewer
+    PRODUCT_BUNDLE_IDENTIFIER: com.glennwest.MarkdownViewer
+    CODE_SIGN_STYLE: Manual
+    CODE_SIGN_IDENTITY: "-"
+    ENABLE_HARDENED_RUNTIME: NO
+    DEAD_CODE_STRIPPING: YES
+
+targets:
+  MarkdownViewer:
+    type: application
+    platform: macOS
+    sources:
+      - path: Sources/MarkdownViewer
+    info:
+      path: Sources/MarkdownViewer/Info.plist
+      properties:
+        CFBundleDisplayName: Markdown Viewer
+        CFBundleName: MarkdownViewer
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        LSMinimumSystemVersion: "13.0"
+        LSApplicationCategoryType: public.app-category.productivity
+        NSHighResolutionCapable: true
+        CFBundleDocumentTypes:
+          - CFBundleTypeName: Markdown Document
+            CFBundleTypeRole: Viewer
+            LSHandlerRank: Default
+            LSItemContentTypes:
+              - net.daringfireball.markdown
+              - public.plain-text
+              - public.text
