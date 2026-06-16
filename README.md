@@ -37,6 +37,24 @@ xcodegen generate
 open MarkdownViewer.xcodeproj
 ```
 
+## System Integration (optional)
+
+After installing the app, run:
+
+```bash
+./setup.sh
+```
+
+This:
+
+- installs an `mdviewer` CLI launcher to `/usr/local/bin` so you can run
+  `mdviewer file.md` from any terminal, and
+- registers Markdown Viewer as the **default** app for `.md` / `.markdown`
+  files (uses [`duti`](https://github.com/moretension/duti) —
+  `brew install duti`).
+
+Override the install location with `BINDIR=~/.local/bin ./setup.sh`.
+
 ## Project Layout
 
 ```

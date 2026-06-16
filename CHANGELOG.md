@@ -3,6 +3,8 @@
 ## [Unreleased]
 
 ### 2026-06-16
+- **feat:** `setup.sh` installs an `mdviewer` CLI launcher to the PATH and
+  registers the app as the default handler for `.md` / `.markdown` (via duti).
 - **feat:** Watch the open file for on-disk changes and auto-reload edits.
 - **feat:** Track recently viewed files — "Open Recent" menu and a recent list
   in the empty state for one-click reopening.

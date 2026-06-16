@@ -1,0 +1,8 @@
+#!/bin/bash
+# Launch Markdown Viewer, optionally opening the given file(s).
+# Usage: mdviewer [file.md ...]
+if [ "$#" -eq 0 ]; then
+    open -a "Markdown Viewer"
+else
+    open -a "Markdown Viewer" "$@"
+fi
