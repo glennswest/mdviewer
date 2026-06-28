@@ -45,6 +45,12 @@ struct MarkdownWebView: NSViewRepresentable {
         pre { background: rgba(127,127,127,.12); padding: 1em; border-radius: 8px; overflow-x: auto; }
         pre code { background: none; padding: 0; }
         li { margin: .35em 0; }
+        table { border-collapse: collapse; margin: 1.1em 0; width: 100%;
+                font-family: -apple-system, system-ui, sans-serif; font-size: .92em; }
+        th, td { border: 1px solid #d8d8d8; padding: .45em .7em; text-align: left;
+                 vertical-align: top; }
+        th { background: rgba(127,127,127,.12); font-weight: 600; }
+        tbody tr:nth-child(even) td { background: rgba(127,127,127,.05); }
         figure { margin: 1em 0; text-align: center; }
         figure img { max-width: 100%; height: auto; border-radius: 6px; }
         figcaption { font-size: .85em; color: #888; margin-top: .4em; }
@@ -54,6 +60,7 @@ struct MarkdownWebView: NSViewRepresentable {
             hr { border-top-color: #444; }
             em { color: #aaa; }
             blockquote { border-left-color: #555; color: #bbb; }
+            th, td { border-color: #444; }
             figcaption { color: #999; }
         }
         </style></head>

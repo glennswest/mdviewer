@@ -8,7 +8,8 @@ readable layout. No dependencies, no Electron — just SwiftUI and WebKit.
 - Renders Markdown to styled HTML in a WebView
 - Light **and** dark mode (follows the system appearance)
 - Supports headings, ordered/unordered lists, blockquotes, fenced code blocks,
-  inline code, bold/italic, horizontal rules, links, and images
+  inline code, bold/italic, horizontal rules, links, images, and GFM pipe
+  tables (with per-column alignment)
 - Relative image paths resolve against the file's own directory
 - Plain `.txt` files render as preformatted text
 - Opens files from Finder (double-click / "Open With") or via **File ▸ Open…**

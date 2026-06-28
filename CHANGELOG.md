@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### 2026-06-28
+- **feat:** Render GFM pipe tables with per-column alignment (`:--`, `:-:`,
+  `--:`), escaped `\|` cells, and inline formatting inside cells. Styled with
+  collapsed borders, header shading, zebra rows, and dark-mode border colors.
+
 ### 2026-06-16
 - **feat:** `setup.sh` installs an `mdviewer` CLI launcher to the PATH and
   registers the app as the default handler for `.md` / `.markdown` (via duti).

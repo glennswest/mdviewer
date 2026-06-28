@@ -14,7 +14,7 @@ enum HTML {
 ///
 /// Supports: ATX headings (`#`..`######`), unordered lists (`-`/`*`),
 /// ordered lists (`1.`), fenced code blocks (```), horizontal rules,
-/// blockquotes, images, links, and inline bold/italic/code.
+/// blockquotes, GFM pipe tables, images, links, and inline bold/italic/code.
 enum Markdown {
     static func toXHTML(_ md: String) -> String {
         var html = ""
@@ -28,8 +28,10 @@ enum Markdown {
             if inOrdered { html += "</ol>\n"; inOrdered = false }
         }
 
-        for raw in md.split(separator: "\n", omittingEmptySubsequences: false) {
-            let line = String(raw)
+        let lines = md.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
+        var i = 0
+        while i < lines.count {
+            let line = lines[i]
             let t = line.trimmingCharacters(in: .whitespaces)
 
             // Fenced code blocks.
@@ -42,21 +44,46 @@ enum Markdown {
                     closeList()
                     inCode = true
                 }
+                i += 1; continue
+            }
+            if inCode { codeBuffer += line + "\n"; i += 1; continue }
+
+            if t.isEmpty { closeList(); i += 1; continue }
+
+            // GFM pipe table: a row containing `|` followed by a delimiter row.
+            if t.contains("|"), i + 1 < lines.count, isTableDelimiter(lines[i + 1]) {
+                closeList()
+                let aligns = parseAlignments(lines[i + 1])
+                html += "<table>\n<thead>\n<tr>"
+                for (idx, cell) in splitRow(t).enumerated() {
+                    html += "<th\(alignAttr(aligns, idx))>\(inline(cell))</th>"
+                }
+                html += "</tr>\n</thead>\n<tbody>\n"
+                i += 2
+                while i < lines.count {
+                    let row = lines[i].trimmingCharacters(in: .whitespaces)
+                    if row.isEmpty || !row.contains("|") { break }
+                    html += "<tr>"
+                    for (idx, cell) in splitRow(row).enumerated() {
+                        html += "<td\(alignAttr(aligns, idx))>\(inline(cell))</td>"
+                    }
+                    html += "</tr>\n"
+                    i += 1
+                }
+                html += "</tbody>\n</table>\n"
                 continue
             }
-            if inCode { codeBuffer += line + "\n"; continue }
 
-            if t.isEmpty { closeList(); continue }
-            if t == "---" || t == "***" || t == "___" { closeList(); html += "<hr/>\n"; continue }
+            if t == "---" || t == "***" || t == "___" { closeList(); html += "<hr/>\n"; i += 1; continue }
 
-            if t.hasPrefix("###### ") { closeList(); html += "<h6>\(inline(String(t.dropFirst(7))))</h6>\n"; continue }
-            if t.hasPrefix("##### ") { closeList(); html += "<h5>\(inline(String(t.dropFirst(6))))</h5>\n"; continue }
-            if t.hasPrefix("#### ") { closeList(); html += "<h4>\(inline(String(t.dropFirst(5))))</h4>\n"; continue }
-            if t.hasPrefix("### ") { closeList(); html += "<h3>\(inline(String(t.dropFirst(4))))</h3>\n"; continue }
-            if t.hasPrefix("## ") { closeList(); html += "<h2>\(inline(String(t.dropFirst(3))))</h2>\n"; continue }
-            if t.hasPrefix("# ") { closeList(); html += "<h1>\(inline(String(t.dropFirst(2))))</h1>\n"; continue }
+            if t.hasPrefix("###### ") { closeList(); html += "<h6>\(inline(String(t.dropFirst(7))))</h6>\n"; i += 1; continue }
+            if t.hasPrefix("##### ") { closeList(); html += "<h5>\(inline(String(t.dropFirst(6))))</h5>\n"; i += 1; continue }
+            if t.hasPrefix("#### ") { closeList(); html += "<h4>\(inline(String(t.dropFirst(5))))</h4>\n"; i += 1; continue }
+            if t.hasPrefix("### ") { closeList(); html += "<h3>\(inline(String(t.dropFirst(4))))</h3>\n"; i += 1; continue }
+            if t.hasPrefix("## ") { closeList(); html += "<h2>\(inline(String(t.dropFirst(3))))</h2>\n"; i += 1; continue }
+            if t.hasPrefix("# ") { closeList(); html += "<h1>\(inline(String(t.dropFirst(2))))</h1>\n"; i += 1; continue }
 
-            if t.hasPrefix("> ") { closeList(); html += "<blockquote>\(inline(String(t.dropFirst(2))))</blockquote>\n"; continue }
+            if t.hasPrefix("> ") { closeList(); html += "<blockquote>\(inline(String(t.dropFirst(2))))</blockquote>\n"; i += 1; continue }
 
             // Standalone image: ![alt](src)
             if t.hasPrefix("![") {
@@ -68,7 +95,7 @@ enum Markdown {
                     if !alt.isEmpty { html += "<figcaption>\(HTML.escape(alt))</figcaption>" }
                     html += "</figure>\n"
                 }
-                continue
+                i += 1; continue
             }
 
             // Unordered list.
@@ -76,7 +103,7 @@ enum Markdown {
                 if inOrdered { html += "</ol>\n"; inOrdered = false }
                 if !inList { html += "<ul>\n"; inList = true }
                 html += "<li>\(inline(String(t.dropFirst(2))))</li>\n"
-                continue
+                i += 1; continue
             }
 
             // Ordered list: "1. ", "2. ", ...
@@ -84,15 +111,61 @@ enum Markdown {
                 if inList { html += "</ul>\n"; inList = false }
                 if !inOrdered { html += "<ol>\n"; inOrdered = true }
                 html += "<li>\(inline(String(t[r.upperBound...])))</li>\n"
-                continue
+                i += 1; continue
             }
 
             closeList()
             html += "<p>\(inline(t))</p>\n"
+            i += 1
         }
         if inCode { html += "<pre><code>\(HTML.escape(codeBuffer))</code></pre>\n" }
         closeList()
         return html
+    }
+
+    // MARK: - GFM tables
+
+    /// A delimiter row separates a table header from its body, e.g.
+    /// `| --- | :--: | --: |`. Each cell is dashes with optional alignment
+    /// colons. Requires at least one pipe so a bare `---` rule isn't mistaken
+    /// for a table.
+    private static func isTableDelimiter(_ line: String) -> Bool {
+        let t = line.trimmingCharacters(in: .whitespaces)
+        guard t.contains("|") else { return false }
+        let cells = splitRow(t)
+        guard !cells.isEmpty else { return false }
+        for cell in cells where cell.range(of: #"^:?-+:?$"#, options: .regularExpression) == nil {
+            return false
+        }
+        return true
+    }
+
+    /// Split a table row into trimmed cells, dropping the optional leading and
+    /// trailing pipes and honouring escaped `\|` separators.
+    private static func splitRow(_ line: String) -> [String] {
+        var s = line.trimmingCharacters(in: .whitespaces)
+        if s.hasPrefix("|") { s.removeFirst() }
+        if s.hasSuffix("|") { s.removeLast() }
+        return s.replacingOccurrences(of: "\\|", with: "\u{0001}")
+            .components(separatedBy: "|")
+            .map { $0.replacingOccurrences(of: "\u{0001}", with: "|").trimmingCharacters(in: .whitespaces) }
+    }
+
+    /// Per-column alignment ("left" / "right" / "center" / "") from a delimiter row.
+    private static func parseAlignments(_ line: String) -> [String] {
+        splitRow(line).map { cell in
+            let left = cell.hasPrefix(":"), right = cell.hasSuffix(":")
+            if left && right { return "center" }
+            if right { return "right" }
+            if left { return "left" }
+            return ""
+        }
+    }
+
+    /// Inline `style="text-align:…"` for column `idx`, or "" when unaligned.
+    private static func alignAttr(_ aligns: [String], _ idx: Int) -> String {
+        guard idx < aligns.count, !aligns[idx].isEmpty else { return "" }
+        return " style=\"text-align:\(aligns[idx])\""
     }
 
     // MARK: - Inline formatting
